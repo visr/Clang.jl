@@ -10,13 +10,20 @@
     { rtype c; memcpy(&c, b, sizeof(rtype)); return c; } \
   extern "C" unsigned int wci_size_##rtype() { return sizeof(rtype); }
 
+
+// Struct helpers: memcpy shenanigans due to no structs byval
+wci_st(CXSourceLocation)
+wci_st(CXSourceRange)
+wci_st(CXTUResourceUsageEntry)
+wci_st(CXTUResourceUsage)
+wci_st(CXCursor)
+wci_st(CXType)
+wci_st(CXToken)
+wci_st(CXString)
+
 typedef std::vector<CXCursor> CursorList;
 typedef std::set<CursorList*> allcl_t;
 allcl_t allCursorLists;
-
-//
-wci_st(CXCursor)
-wci_st(CXString)
 
 // to traverse AST with cursor visitor
 // TODO: replace this with a C container
@@ -68,4 +75,17 @@ void wci_getCLCursor(char* cuout, CursorList* cl, int cuid)
 {
   wci_save_CXCursor((*cl)[cuid], cuout);
 }
+
+CXCursor test_cu1(CXTranslationUnit tu)
+{
+  CXCursor cu = clang_getTranslationUnitCursor(tu);
+  printf("hash out: %x kind out: %u\n", clang_hashCursor(cu), cu.kind);
+  return cu;
+}
+
+void test_cu2(CXCursor cu)
+{
+  printf("hash in: %x kind in: %u\n", clang_hashCursor(cu), cu.kind);
+}
+
 } // extern
