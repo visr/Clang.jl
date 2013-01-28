@@ -9,23 +9,24 @@ export tu_init, tu_cursor
 export CXType, CXCursor, CXString, CXTypeKind, CursorList
 
 const libwci = "../lib/libwrapcindex"
+const libclang = "libclang"
 
 # Type definitions for wrapped types
 
 typealias CXIndex Ptr{Void}
 typealias CXUnsavedFile Ptr{Void}
 typealias CXFile Ptr{Void}
+typealias CXTranslationUnit Ptr{Void}
 typealias CXTypeKind Int32
 typealias CXCursorKind Int32
-typealias CXTranslationUnit Ptr{Void}
-const CXString_size = ccall( ("wci_size_CXString", libwci), Int, ())
-
-# work-around: ccall followed by composite_type in @eval gives error.
+#const CXString_size = ccall( ("wci_size_CXString", libwci), Int, ())
+#
+## work-around: ccall followed by composite_type in @eval gives error.
 get_sz(sym) = @eval ccall( ($(strcat("wci_size_", sym)), $libwci), Int, ())
-
+#
 for st in Any[
     :CXSourceLocation, :CXSourceRange,
-    :CXTUResourceUsageEntry, :CXTUResourceUsage, :CXCursor, :CXType,
+    :CXTUResourceUsageEntry, :CXTUResourceUsage,
     :CXToken ]
   # Generate container types from the above list
   sz_name = symbol(strcat(st,"_size"))
@@ -37,29 +38,54 @@ for st in Any[
     end
   end
 end
-
-type CXString
-  data::Array{Uint8,1}
-  str::ASCIIString
-  CXString() = new(Array(Uint8, CXString_size), "")
-end
-
+#
+#type CXString
+#  data::Array{Uint8,1}
+#  str::ASCIIString
+#  CXString() = new(Array(Uint8, CXString_size), "")
+#end
+#
 type CursorList
   ptr::Ptr{Void}
   size::Int
 end
 
-function get_string(cx::CXString)
-  p::Ptr{Uint8} = ccall( (:wci_getCString, libwci), 
-    Ptr{Uint8}, (Ptr{Void},), cx.data)
-  if (p == C_NULL)
-    cx.str = ""
-  else
-    cx.str = bytestring(p)
-    ccall( (:wci_disposeString, libwci), Void, (Ptr{Uint8},), p)
-  end
-  cx.str
+type CXType
+  kind::Int32
+  data1::Ptr{Void}
+  data2::Ptr{Void}
 end
+
+type CXCursor
+  kind::Int32
+  xdata::Int32
+  data1::Ptr{Void}
+  data2::Ptr{Void}
+  data3::Ptr{Void}
+  CXCursor() = new(0,0,0,0,0)
+end
+
+type CXString
+  data::Ptr{Void}
+  private_flags::Uint32
+end
+
+function get_string(cx::CXString)
+  bytestring( ccall( (:clang_getCString, libclang), Ptr{Uint8}, (CXString,), cx) )
+  ccall( (:clang_disposeString, libclang), Void, (CXString,), cx)
+end
+
+#function get_string(cx::CXString)
+#  p::Ptr{Uint8} = ccall( (:wci_getCString, libwci), 
+#    Ptr{Uint8}, (Ptr{Void},), cx.data)
+#  if (p == C_NULL)
+#    cx.str = ""
+#  else
+#    cx.str = bytestring(p)
+#    ccall( (:wci_disposeString, libwci), Void, (Ptr{Uint8},), p)
+#  end
+#  cx.str
+#end
 
 # These require statements must follow type definitions above.
 include("../src/cindex_base.jl")
@@ -70,7 +96,7 @@ anymatch(first, args...) = any({==(first, a) for a in args})
 
 cu_type(c::CXCursor) = getCursorType(c)
 cu_kind(c::CXCursor) = getCursorKind(c)
-ty_kind(c::CXType) = reinterpret(Int32, c.data[1:4])[1]
+ty_kind(c::CXType) = c.kind
 name(c::CXCursor) = getCursorDisplayName(c)
 spelling(c::CXType) = getTypeKindSpelling(ty_kind(c))
 spelling(c::CXCursor) = getCursorSpelling(c)
@@ -182,8 +208,8 @@ end
 function children(cu::CXCursor)
   cl = cl_create() 
   ccall( (:wci_getChildren, libwci),
-    Ptr{Void},
-      (Ptr{Void}, Ptr{Void}), cu.data, cl.ptr)
+    Uint32,
+      (CXCursor, Ptr{Void}), cu, cl.ptr)
   cl.size = cl_size(cl.ptr)
   return cl
 end
