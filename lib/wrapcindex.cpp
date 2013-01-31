@@ -29,7 +29,6 @@ allcl_t allCursorLists;
 // TODO: replace this with a C container
 CXChildVisitResult wci_visitCB(CXCursor cur, CXCursor par, CXClientData data)
 {
-  printf("cb\n");
   CursorList* cl = (CursorList*)data;
   cl->push_back(cur);
   return CXChildVisit_Continue;
@@ -45,12 +44,12 @@ unsigned int wci_getChildren(CXCursor cu, CursorList* cl)
   return 0;
 }
 
-void wci_getCursorFile(CXCursor cu, char* cxsout)
+CXString wci_getCursorFile(CXCursor cu, char* cxsout)
 {
   CXSourceLocation loc = clang_getCursorLocation( cu );
   CXFile cxfile;
   clang_getExpansionLocation(loc, &cxfile, 0, 0, 0);
-  wci_save_CXString(clang_getFileName(cxfile), cxsout);
+  return clang_getFileName(cxfile);
 }
 
 CursorList* wci_createCursorList()
@@ -71,9 +70,9 @@ unsigned int wci_sizeofCursorList(CursorList* cl)
   return cl->size();
 }
 
-void wci_getCLCursor(char* cuout, CursorList* cl, int cuid)
+CXCursor wci_getCLCursor(CursorList* cl, int cuid)
 {
-  wci_save_CXCursor((*cl)[cuid], cuout);
+  return (*cl)[cuid];
 }
 
 CXCursor test_cu1(CXTranslationUnit tu)

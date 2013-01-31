@@ -33,7 +33,9 @@ function full_name(t::CXType)
 end
 
 function dump_functions(cl::CursorList, restrict_hdr::Any)
+  println("dump_functions")
   for i=1:cl.size
+    print("w ")
     cu = cl[i]
     if (restrict_hdr != None && cu_file(cu) != restrict_hdr)
       continue
@@ -49,6 +51,6 @@ function dump_functions(hdr::String)
   tu = tu_init(hdr)
   topcu = tu_cursor(tu)
   topcl = children(topcu)
-  dump_functions(topcl, hdr)
+  dump_functions(topcl)
 end
 dump_functions(cl::CursorList) = dump_functions(cl, None)

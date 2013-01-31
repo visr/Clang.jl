@@ -38,13 +38,7 @@ for st in Any[
     end
   end
 end
-#
-#type CXString
-#  data::Array{Uint8,1}
-#  str::ASCIIString
-#  CXString() = new(Array(Uint8, CXString_size), "")
-#end
-#
+
 type CursorList
   ptr::Ptr{Void}
   size::Int
@@ -54,6 +48,7 @@ type CXType
   kind::Int32
   data1::Ptr{Void}
   data2::Ptr{Void}
+  CXType() = new(0,0)
 end
 
 type CXCursor
@@ -68,11 +63,16 @@ end
 type CXString
   data::Ptr{Void}
   private_flags::Uint32
+  CXString() = new(0,0)
 end
 
 function get_string(cx::CXString)
-  bytestring( ccall( (:clang_getCString, libclang), Ptr{Uint8}, (CXString,), cx) )
-  ccall( (:clang_disposeString, libclang), Void, (CXString,), cx)
+  # bhga
+  if cx.data == C_NULL
+    return ""
+  else
+    return bytestring(convert(Ptr{Uint8}, cx.data))
+  end
 end
 
 #function get_string(cx::CXString)
@@ -127,6 +127,7 @@ function value(c::CXCursor)
   if cu_kind(c) != CurKind.ENUMCONSTANTDECL
     error("Not a value cursor.")
   end
+  print("") # heisenbug fix...  
   t = cu_type(c)
   if anymatch(ty_kind(t), 
     TypKind.INT, TypKind.LONG, TypKind.LONGLONG)
@@ -198,10 +199,9 @@ cl_size(clptr::Ptr{Void}) =
 
 function ref(cl::CursorList, clid::Int)
   if (clid < 1 || clid > cl.size) error("Index out of range or empty list") end 
-  cu = CXCursor()
-  ccall( (:wci_getCLCursor, libwci),
-    Void,
-    (Ptr{Void}, Ptr{Void}, Int), cu.data, cl.ptr, clid-1)
+  cu = ccall( (:wci_getCLCursor, libwci),
+    CXCursor,
+    (Ptr{Void}, Int), cl.ptr, clid-1)
   return cu
 end
 
@@ -218,7 +218,7 @@ function cu_file(cu::CXCursor)
   str = CXString()
   ccall( (:wci_getCursorFile, libwci),
     Void,
-      (Ptr{Void}, Ptr{Void}), cu.data, str.data)
+      (CXCursor, Ptr{Void}), cu, str.data)
   return get_string(str)
 end
 

@@ -27,7 +27,6 @@ function wrap_enums(io::IOStream, cu::cindex.CXCursor, typedef::Any)
   end
   
   cl = cindex.children(cu)
-
   remap_name = 1
   remap_f = identity
   for k in keys(enum_remaps)
@@ -42,7 +41,6 @@ function wrap_enums(io::IOStream, cu::cindex.CXCursor, typedef::Any)
     name = cindex.spelling(cur_cu)
     if (length(name) < 1) continue end
     if (remap_name>1) name = remap_f(name[remap_name+1:end]) end
-
     println(io, "const ", name, " = ", cindex.value(cur_cu))
   end
   cindex.cl_dispose(cl)

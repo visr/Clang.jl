@@ -168,7 +168,7 @@ function getCursorSpelling(a1::CXCursor,)
   return get_string(c)
 end
 function getCursorDisplayName(a1::CXCursor,)
-  ccall( (:clang_getCursorDisplayName, libclang), CXString, (CXCursor,), a1)
+  c = ccall( (:clang_getCursorDisplayName, libclang), CXString, (CXCursor,), a1)
   return get_string(c)
 end
 
