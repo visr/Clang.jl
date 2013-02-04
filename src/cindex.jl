@@ -205,15 +205,28 @@ function ref(cl::CursorList, clid::Int)
   return cu
 end
 
-function children(cu::CXCursor)
-  cl = cl_create() 
-  ccall( (:wci_getChildren, libwci),
-    Uint32,
-      (CXCursor, Ptr{Void}), cu, cl.ptr)
-  cl.size = cl_size(cl.ptr)
-  return cl
-end
+#function children(cu::CXCursor)
+#  cl = cl_create() 
+#  ccall( (:wci_getChildren, libwci),
+#    Uint32,
+#      (CXCursor, Ptr{Void}), cu, cl.ptr)
+#  cl.size = cl_size(cl.ptr)
+#  return cl
+#end
 
+# cursor child visitor
+#typealias CXClientData Ptr{Void}
+#function _child_visit_cb(cursor::CXCursor, parent::CXCursor, client_data::CXClientData)
+#  println("visitor cb!: ", name(cursor))
+#  return CursorVisitorResult.Continue
+#end
+#child_visit_cb = cfunction(_child_visit_cb, Uint32, (CXCursor, CXCursor, CXClientData))
+#
+#function children(cu::CXCursor)
+#  cl = CursorList()
+#  ccall( (:clang_visitChildren, libclang), Uint32, (CXCursor, Ptr{Void}, CXClientData), cu, 
+#
+#end
 function cu_file(cu::CXCursor)
   str = CXString()
   ccall( (:wci_getCursorFile, libwci),
