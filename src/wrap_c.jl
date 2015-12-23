@@ -182,7 +182,8 @@ cl_to_jl = Dict{Any,Any}(
     :int32_t                => :Int32,
     :int16_t                => :Int16,
     :int8_t                 => :Int8,
-    :uintptr_t              => :Csize_t
+    :uintptr_t              => :Csize_t,
+    cindex.Pointer          => :Ptr  # workaround KeyError: Clang.cindex.Pointer not found (no effect on bindings)
     )
 
 int_conversion = Dict{Any,Any}(
@@ -737,6 +738,7 @@ function print_buffer(ostrm, obuf)
         if state != :enum
             state = (isa(e, AbstractString) ? :string :
                      isa(e, Expr)   ? e.head :
+                     isa(e, Tuple) ? :function :
                      error("output: can't handle type $(typeof(e))"))
         end
 
@@ -757,7 +759,14 @@ function print_buffer(ostrm, obuf)
             end
         end
 
-        println(ostrm, e)
+        # special case for docstrings
+        if isa(e, Tuple)
+            println(ostrm, "\"", e[1], "\"")
+            println(ostrm, e[2])
+        else
+            println(ostrm, e)
+        end
+
 
         if state == :enum && isa(e, AbstractString) && startswith(e, "# end enum")
             state = :end_enum
