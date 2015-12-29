@@ -761,7 +761,7 @@ function print_buffer(ostrm, obuf)
 
         # special case for docstrings
         if isa(e, Tuple)
-            println(ostrm, "\"", e[1], "\"")
+            println(ostrm, "\n\"\"\"\n", e[1], "\"\"\"")
             println(ostrm, e[2])
         else
             println(ostrm, e)
