@@ -836,7 +836,6 @@ function Base.run(wc::WrapContext)
     # Write "common" definitions: types, typealiases, etc.
     open(wc.common_file, "w") do f
         println(f, "# Automatically generated using Clang.jl wrap_c, version $version\n")
-        println(f, "using Compat")
 
         print_buffer(f, common_buf)
     end
