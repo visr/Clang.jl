@@ -756,6 +756,8 @@ function print_buffer(ostrm, obuf)
         if isa(e, Tuple)
             println(ostrm, "\n\"\"\"\n", e[1], "\"\"\"")
             println(ostrm, e[2])
+        else
+            println(ostrm, e)
         end
 
         if isa(e, Expr) && e.head == :macrocall && first(e.args) == :@enum
@@ -767,7 +769,6 @@ function print_buffer(ostrm, obuf)
             continue
         end
 
-        println(ostrm, e)
     end
 end
 
