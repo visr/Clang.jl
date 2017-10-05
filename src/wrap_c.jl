@@ -685,9 +685,9 @@ function wrap_header(wc::WrapContext, topcu::CLCursor, top_hdr, obuf::Array)
             if (isa(cursor, FunctionDecl))
                 wrap(wc, obuf, cursor, wc.header_library(cu_file(cursor)))
             elseif !isa(cursor, TypeRef)
-                isenum = isa(cursor, EnumDecl)
-                if isenum && i != topcl.size && isa(topcl[i+1], TypedefDecl)
-                    # combine EnumDecl followed by TypedefDecl in one enum
+                combine = isa(cursor, Union{EnumDecl, StructDecl})
+                if combine && i != topcl.size && isa(topcl[i+1], TypedefDecl)
+                    # combine EnumDecl or StructDecl followed by TypedefDecl
                     # without this, this enum from C:
                     # typedef enum {
                     #     GA_ReadOnly = 0,
