@@ -381,9 +381,21 @@ function wrap(context::WrapContext, expr_buf::OrderedDict, cursor::EnumDecl; use
 
     enum_expr = :(@enum($enumname::$_int))
     expr_buf[enumname] = ExprUnit(enum_expr)
+    val2name = Dict{_int, Symbol}()
     for (name, value) in name_values
         # expr_buf[name] = enum_expr # TODO
-        push!(enum_expr.args, :($name = $value))
+        # since @enum Fruit apple=1 orange=2 kiwi=2
+        # throws ArgumentError: values for Enum Fruit are not unique
+        # we transform it into:
+        # @enum Fruit apple=1 orange=2
+        # const kiwi = orange
+        if value in keys(val2name)
+            firstname = val2name[value]
+            expr_buf[name] = ExprUnit(:(const $name = $firstname))
+        else
+            push!(enum_expr.args, :($name = $value))
+            val2name[value] = name
+        end
     end
     return
 end
