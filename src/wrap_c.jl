@@ -379,7 +379,7 @@ function wrap(context::WrapContext, expr_buf::OrderedDict, cursor::EnumDecl; use
         push!(name_values, (cur_sym, Int(value(enumitem))))
     end
 
-    enum_expr = :(@enum($enumname))
+    enum_expr = :(@enum($enumname::$_int))
     expr_buf[enumname] = ExprUnit(enum_expr)
     for (name, value) in name_values
         # expr_buf[name] = enum_expr # TODO
